@@ -1,0 +1,74 @@
+name: BookCTRL CI
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: ebooks
+          POSTGRES_USER: ebooks
+          POSTGRES_PASSWORD: ebooks
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U ebooks -d ebooks"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgres://ebooks:ebooks@localhost:5432/ebooks
+      EBOOKS_DIR: ./test-ebooks
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Run Prisma schema validation
+        working-directory: backend
+        run: npx prisma validate
+
+      - name: Run Prisma migration check
+        working-directory: backend
+        run: npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Type check (TS)
+        working-directory: backend
+        run: npx tsc --noEmit
+
+      - name: Run ESLint
+        working-directory: backend
+        run: npx eslint "src/**/*.ts" || exit 1
+
+      - name: Smoke test server startup
+        working-directory: backend
+        run: |
+          node dist/main.js &
+          sleep 5
+          curl -f http://localhost:3000/search || (echo "Server failed to start" && exit 1)
