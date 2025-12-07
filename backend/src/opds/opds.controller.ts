@@ -32,7 +32,7 @@ export class OpdsController {
     const books = await this.opds.getAllBooks();
 
     const entries = books
-      .map((book) => {
+      .map((book: any) => {
         const entryId = `/opds/book/${book.id}`;
         const fileLinks = book.files
           .map((f: any) => {

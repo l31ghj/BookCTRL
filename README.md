@@ -4,76 +4,71 @@ Self-hosted ebook downloader & OPDS server.
 
 Features:
 
-- Search ebooks via pluggable providers (ships with Project Gutenberg via Gutendex).
-- Download and store ebooks locally (SQLite + filesystem).
-- Simple web UI for search, library, and providers.
-- OPDS catalog so compatible readers (KOReader, Thorium, Calibre, etc.) can browse and download.
-- Single-container deployment using Docker.
-- CI workflow that builds, type-checks, and smoke-tests the backend.
+- Pluggable providers (ships with Project Gutenberg via Gutendex).
+- Download EPUB/PDF into a local library.
+- Simple web UI for:
+  - Search
+  - Library
+  - Provider settings
+- OPDS catalog:
+  - Root: `/opds`
+  - Catalog: `/opds/catalog`
+- Single-container deployment via Docker / docker-compose.
+- Uses SQLite via Prisma.
 
 ## Tech stack
 
 - Node.js + TypeScript
 - NestJS
 - Prisma ORM (SQLite)
-- Handlebars for server-rendered pages
+- Handlebars views
 - Docker
 - GitHub Actions CI
 
-## Quickstart (no Docker)
+## Local development
 
 ```bash
 cd backend
 npm install
+# create .env
+echo DATABASE_URL="file:./dev.db" > .env
+echo EBOOKS_DIR="./ebooks" >> .env
+
 npx prisma migrate dev --name init
 npm run start:dev
 ```
 
-App will be available at: http://localhost:3000
+Then open http://localhost:3000
 
-## Quickstart (Docker)
+### Configure Gutenberg provider
 
-From the repo root:
+1. Go to **Providers**.
+2. Add:
+   - Type: `gutenberg`
+   - Name: `Gutenberg`
+   - Base URL: `https://gutendex.com`
+
+Then you can search and download books.
+
+## Docker (standalone)
+
+From repo root:
 
 ```bash
-docker build -t bookctrl-backend ./backend
-docker run -p 8010:3000 -v $(pwd)/data:/data bookctrl-backend
+docker compose up -d --build
 ```
 
-App will be available at: http://localhost:8010
+Then open: http://localhost:8010
 
-SQLite database and ebooks will be stored under `./data` on your host.
-
-## OPDS
-
-Once running:
-
-- Root OPDS feed: `http://localhost:3000/opds`
-- Catalog: `http://localhost:3000/opds/catalog`
-
-Point KOReader / Thorium / Calibre at the root feed URL.
-
-## Providers
-
-Initial provider type:
-
-- `gutenberg` (Gutendex API)
-
-You can add providers in the web UI under **Providers**:
-
-- Type: `gutenberg`
-- Name: anything (e.g. `Gutenberg`)
-- Base URL: `https://gutendex.com`
+Data is persisted in `./data` (SQLite DB + ebooks).
 
 ## CI
 
-The repo includes a GitHub Actions workflow that:
+GitHub Actions workflow does:
 
-- Installs dependencies
-- Runs Prisma generate
-- Runs `nest build`
-- Runs `tsc --noEmit` (type-check only)
-- Smoke-tests `/search` endpoint
-
-No ESLint is wired in this clean base (you can add it later if you want).
-
+- Install deps
+- Prisma generate
+- Prisma migrate deploy (SQLite)
+- Build backend
+- Type-check with `tsc --noEmit`
+- Smoke test `/search`

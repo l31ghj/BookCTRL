@@ -35,7 +35,7 @@ export class GutenbergProvider implements EbookProvider {
         language: item.languages?.[0],
         year: undefined,
         description: undefined,
-        coverUrl: formatsObj['image/jpeg'] ?? null,
+        coverUrl: (formatsObj as any)['image/jpeg'] ?? null,
         formats,
       };
     });

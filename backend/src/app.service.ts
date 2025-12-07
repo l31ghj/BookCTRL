@@ -29,7 +29,7 @@ export class AppService {
   }
 
   async createProvider(input: { type: string; name: string; baseUrl?: string }) {
-    const settings: Prisma.InputJsonValue = {};
+    const settings: Prisma.JsonValue = {};
     if (input.baseUrl) (settings as any).baseUrl = input.baseUrl;
 
     return this.prisma.provider.create({

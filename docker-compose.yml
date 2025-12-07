@@ -10,11 +10,7 @@ services:
     ports:
       - "8010:3000"
     environment:
-      # SQLite database file inside the mounted /data directory.
       DATABASE_URL: "file:/data/dev.db"
-
-      # Where downloaded ebooks (epub/pdf) will be stored.
       EBOOKS_DIR: "/data/ebooks"
     volumes:
-      # Host data folder (make sure this exists or Docker will create it)
       - ./data:/data

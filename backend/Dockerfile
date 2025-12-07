@@ -10,12 +10,12 @@ COPY prisma ./prisma
 COPY src ./src
 
 RUN npx prisma generate
-RUN npx nest build
+RUN npm run build
 
 ENV NODE_ENV=production
-ENV DATABASE_URL=file:./dev.db
+ENV DATABASE_URL=file:/data/dev.db
 ENV EBOOKS_DIR=/data/ebooks
 
 VOLUME ["/data"]
 
-CMD ["node", "dist/main.js"]
+CMD npx prisma migrate deploy && node dist/main.js
