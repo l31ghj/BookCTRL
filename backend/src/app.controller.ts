@@ -1,3 +1,4 @@
+
 import {
   Body,
   Controller,
@@ -16,9 +17,7 @@ export class AppController {
 
   @Get()
   @Redirect('/search')
-  root() {
-    return;
-  }
+  root() {}
 
   @Get('search')
   @Render('search')
@@ -36,52 +35,10 @@ export class AppController {
     return { books };
   }
 
-  @Get('settings/providers')
-  @Render('providers')
-  async providersPage() {
-    const providers = await this.appService.getProviders();
-    const types = await this.appService.getProviderTypes();
-    return { providers, types };
-  }
-
-  @Post('settings/providers')
-  @Redirect('/settings/providers')
-  async createProvider(
-    @Body() body: { type: string; name: string; baseUrl?: string },
-  ) {
-    if (!body.type || !body.name) {
-      return;
-    }
-    await this.appService.createProvider(body);
-    return;
-  }
-
-  @Post('settings/providers/:id/toggle')
-  @Redirect('/settings/providers')
-  async toggleProvider(
-    @Param('id') id: string,
-    @Body() body: { enabled: string },
-  ) {
-    const enable = body.enabled === 'true';
-    await this.appService.toggleProvider(id, enable);
-    return;
-  }
-
-  @Post('download')
+  @Post('library/:id/delete')
   @Redirect('/library')
-  async download(@Body() body: any) {
-    if (!body.url || !body.providerType || !body.providerBookId) {
-      return;
-    }
-    await this.appService.downloadAndStore({
-      providerInstanceId: body.providerInstanceId,
-      providerType: body.providerType,
-      providerBookId: body.providerBookId,
-      title: body.title,
-      author: body.author,
-      format: body.format,
-      url: body.url,
-    });
+  async deleteBook(@Param('id') id: string) {
+    await this.appService.deleteBook(id);
     return;
   }
 }
