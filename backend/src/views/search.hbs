@@ -2,15 +2,15 @@
 <html>
   <head>
     <meta charset="utf-8" />
-    <title>Ebook Downloader</title>
+    <title>BookCTRL</title>
     <style>
-      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #0f172a; color: #e5e7eb; }
-      header { background: #020617; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }
-      header h1 { margin: 0; font-size: 1.1rem; letter-spacing: 0.05em; text-transform: uppercase; color: #9ca3af; }
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #020617; color: #e5e7eb; }
+      header { background: #020617; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #111827; position: sticky; top: 0; z-index: 10; }
+      header h1 { margin: 0; font-size: 1.1rem; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; }
       nav a { color: #9ca3af; margin-left: 1rem; text-decoration: none; font-size: 0.9rem; }
       nav a:hover { color: #e5e7eb; }
       main { padding: 2rem; max-width: 960px; margin: 0 auto; }
-      .card { background: #020617; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #1f2937; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.6); }
+      .card { background: #020617; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #1f2937; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7); }
       h2 { margin-top: 0; margin-bottom: 0.5rem; font-size: 1.1rem; }
       input[type="text"], select { background: #020617; border-radius: 0.5rem; border: 1px solid #374151; padding: 0.5rem 0.75rem; color: #e5e7eb; width: 100%; }
       button { background: #4f46e5; border: none; color: white; padding: 0.5rem 1rem; border-radius: 999px; cursor: pointer; font-weight: 500; font-size: 0.9rem; }
@@ -23,14 +23,11 @@
       .badge { border-radius: 999px; padding: 0.15rem 0.5rem; font-size: 0.75rem; border: 1px solid #4b5563; }
       .muted { color: #9ca3af; font-size: 0.85rem; }
       form.inline { display: inline; }
-      .pill-toggle { display: inline-flex; align-items: center; gap: 0.5rem; }
-      .pill-toggle span { font-size: 0.8rem; }
-      .pill-toggle input { margin: 0; }
     </style>
   </head>
   <body>
     <header>
-      <h1>EBOOK DOWNLOADER</h1>
+      <h1>BOOKCTRL</h1>
       <nav>
         <a href="/search">Search</a>
         <a href="/library">Library</a>

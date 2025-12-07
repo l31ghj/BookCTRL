@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import { ProvidersRuntimeService } from './providers/providers-runtime.service';
 import { Prisma } from '@prisma/client';
+import axios from 'axios';
 import { createWriteStream } from 'fs';
 import { mkdir, stat } from 'fs/promises';
 import * as path from 'path';
-import axios from 'axios';
 
 @Injectable()
 export class AppService {
@@ -51,8 +51,12 @@ export class AppService {
 
   async search(query: string) {
     if (!query) return [];
-    const providers = await this.prisma.provider.findMany({ where: { isEnabled: true } });
-    const allResults = [];
+
+    const providers = await this.prisma.provider.findMany({
+      where: { isEnabled: true },
+    });
+
+    const allResults: any[] = [];
 
     for (const provider of providers) {
       const handler = this.providersRuntime.getProviderByType(provider.type);
@@ -62,9 +66,11 @@ export class AppService {
         results.forEach((r) => (r.providerInstanceId = provider.id));
         allResults.push(...results);
       } catch (err) {
+        // eslint-disable-next-line no-console
         console.error('Error searching provider', provider.name, err);
       }
     }
+
     return allResults;
   }
 

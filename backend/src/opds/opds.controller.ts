@@ -11,8 +11,8 @@ export class OpdsController {
     const xml = `
       <feed xmlns="http://www.w3.org/2005/Atom"
             xmlns:opds="http://opds-spec.org/2010/catalog">
-        <id>urn:ebook-downloader:root</id>
-        <title>Ebook Downloader OPDS</title>
+        <id>urn:bookctrl:root</id>
+        <title>BookCTRL OPDS</title>
         <updated>${new Date().toISOString()}</updated>
 
         <link rel="self" href="/opds" type="application/atom+xml" />
@@ -68,8 +68,8 @@ export class OpdsController {
     const xml = `
       <feed xmlns="http://www.w3.org/2005/Atom"
             xmlns:opds="http://opds-spec.org/2010/catalog">
-        <id>urn:ebook-downloader:catalog</id>
-        <title>Full Book Catalog</title>
+        <id>urn:bookctrl:catalog</id>
+        <title>BookCTRL Catalog</title>
         <updated>${new Date().toISOString()}</updated>
         ${entries}
       </feed>
@@ -104,7 +104,7 @@ export class OpdsController {
     const xml = `
       <entry xmlns="http://www.w3.org/2005/Atom"
              xmlns:opds="http://opds-spec.org/2010/catalog">
-        <id>urn:ebook:${book.id}</id>
+        <id>urn:book:${book.id}</id>
         <title>${book.title}</title>
         <updated>${book.updatedAt.toISOString()}</updated>
         <author><name>${book.author ?? ''}</name></author>

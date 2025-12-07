@@ -11,6 +11,6 @@ async function bootstrap() {
 
   await app.listen(3000);
   // eslint-disable-next-line no-console
-  console.log('Ebook downloader running at http://localhost:3000');
+  console.log('BookCTRL running at http://localhost:3000');
 }
 bootstrap();

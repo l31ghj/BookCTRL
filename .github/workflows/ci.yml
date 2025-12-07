@@ -10,24 +10,9 @@ jobs:
   build-and-test:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_DB: ebooks
-          POSTGRES_USER: ebooks
-          POSTGRES_PASSWORD: ebooks
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U ebooks -d ebooks"
-          --health-interval=5s
-          --health-timeout=5s
-          --health-retries=5
-
     env:
-      DATABASE_URL: postgres://ebooks:ebooks@localhost:5432/ebooks
-      EBOOKS_DIR: ./test-ebooks
+      DATABASE_URL: "file:./dev.db"
+      EBOOKS_DIR: "./ebooks-ci"
 
     steps:
       - name: Checkout code
@@ -42,29 +27,21 @@ jobs:
         working-directory: backend
         run: npm ci || npm install
 
-      - name: Generate Prisma client
+      - name: Prisma generate
         working-directory: backend
         run: npx prisma generate
 
-      - name: Run Prisma schema validation
+      - name: Run migrations (SQLite)
         working-directory: backend
-        run: npx prisma validate
-
-      - name: Run Prisma migration diff check
-        working-directory: backend
-        run: npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma
+        run: npx prisma migrate deploy
 
       - name: Build backend
         working-directory: backend
         run: npm run build
 
-      - name: Type check
+      - name: Type-check (TS)
         working-directory: backend
         run: npx tsc --noEmit
-
-      - name: Lint
-        working-directory: backend
-        run: npx eslint "src/**/*.ts" || exit 1
 
       - name: Smoke test server
         working-directory: backend

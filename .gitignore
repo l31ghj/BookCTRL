@@ -1,85 +1,20 @@
-# ---------------------------
-# Node / NPM
-# ---------------------------
 node_modules/
+dist/
+.env
+.env.*
+*.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-package-lock.json
-
-# ---------------------------
-# Build output
-# ---------------------------
-dist/
-build/
-coverage/
-
-# ---------------------------
-# Environment files
-# ---------------------------
-.env
-.env.*.local
-
-# ---------------------------
-# Local data folders
-# ---------------------------
+pnpm-lock.yaml
+*.sqlite
+*.db
 /data/
-/ebooks/
-/downloads/
-/tmp/
-/cache/
-
-# Prisma engine files (large)
-/prisma/*.db
-/prisma/*.sqlite
-/prisma/migrations/.cache/
-
-# ---------------------------
-# VSCode & Editors
-# ---------------------------
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# ---------------------------
-# OS Files
-# ---------------------------
+ebooks/
+downloads/
 .DS_Store
 Thumbs.db
-
-# ---------------------------
-# Docker
-# ---------------------------
-docker-data/
-docker-compose.override.yml
-
-# ---------------------------
-# Logs
-# ---------------------------
-logs/
-*.log
-
-# ---------------------------
-# TypeScript
-# ---------------------------
-*.tsbuildinfo
-
-# ---------------------------
-# Generated content from NestJS
-# ---------------------------
-*.js.map
-*.d.ts
-
-# ---------------------------
-# Archives
-# ---------------------------
+.vscode/
+.idea/
 *.zip
-*.tar
-*.tgz
-
-# ---------------------------
-# GitHub Actions / CI
-# ---------------------------
-/.github/workflows/*.generated.yml
+coverage/
+.tmp/
