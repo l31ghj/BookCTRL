@@ -23,9 +23,9 @@ export class AppController {
   async searchPage(@Query('q') q?: string) {
     const query = q || '';
 
-    // Minimal mode: No providers yet
-    const providers = [];
-    const results = [];
+    // Minimal mode: no providers yet
+    const providers: unknown[] = [];
+    const results: unknown[] = [];
 
     return { query, providers, results };
   }
