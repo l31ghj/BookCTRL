@@ -1,102 +1,352 @@
+
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <title>BookCTRL</title>
     <style>
-      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #020617; color: #e5e7eb; }
-      header { background: #020617; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #111827; position: sticky; top: 0; z-index: 10; }
-      header h1 { margin: 0; font-size: 1.1rem; letter-spacing: 0.08em; text-transform: uppercase; color: #9ca3af; }
-      nav a { color: #9ca3af; margin-left: 1rem; text-decoration: none; font-size: 0.9rem; }
-      nav a:hover { color: #e5e7eb; }
-      main { padding: 2rem; max-width: 960px; margin: 0 auto; }
-      .card { background: #020617; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #1f2937; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.7); }
-      h2 { margin-top: 0; margin-bottom: 0.5rem; font-size: 1.1rem; }
-      input[type="text"], select { background: #020617; border-radius: 0.5rem; border: 1px solid #374151; padding: 0.5rem 0.75rem; color: #e5e7eb; width: 100%; }
-      button { background: #4f46e5; border: none; color: white; padding: 0.5rem 1rem; border-radius: 999px; cursor: pointer; font-weight: 500; font-size: 0.9rem; }
-      button.secondary { background: #111827; border: 1px solid #374151; }
-      button:disabled { opacity: 0.5; cursor: default; }
-      table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-      th, td { padding: 0.5rem; border-bottom: 1px solid #1f2937; text-align: left; font-size: 0.85rem; }
-      th { color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
-      .tag { display: inline-flex; align-items: center; padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid #4b5563; font-size: 0.75rem; color: #9ca3af; margin-right: 0.25rem; }
-      .badge { border-radius: 999px; padding: 0.15rem 0.5rem; font-size: 0.75rem; border: 1px solid #4b5563; }
-      .muted { color: #9ca3af; font-size: 0.85rem; }
-      form.inline { display: inline; }
+      :root {
+        --bg: #020617;
+        --bg-elevated: #020617;
+        --bg-soft: #020617;
+        --border-subtle: #1f2937;
+        --accent: #38bdf8;
+        --accent-soft: rgba(56, 189, 248, 0.12);
+        --accent-strong: #0ea5e9;
+        --text-main: #e5e7eb;
+        --text-muted: #9ca3af;
+        --danger: #f97373;
+      }
+      * { box-sizing: border-box; }
+      html, body { margin: 0; padding: 0; height: 100%; }
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: radial-gradient(circle at top left, #0f172a 0, #020617 55%, #000 100%);
+        color: var(--text-main);
+      }
+      a { color: inherit; text-decoration: none; }
+
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        backdrop-filter: blur(18px);
+        background: linear-gradient(to right, rgba(15,23,42,0.95), rgba(15,23,42,0.88));
+        border-bottom: 1px solid rgba(30,64,175,0.6);
+        padding: 0.75rem 2.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+      }
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: radial-gradient(circle at 30% 0, #e0f2fe 0, #38bdf8 30%, #0f172a 60%, #020617 100%);
+        box-shadow: 0 0 0 1px rgba(56,189,248,0.5), 0 10px 30px rgba(15,23,42,0.9);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        color: #0b1120;
+      }
+      .brand-text {
+        display: flex;
+        flex-direction: column;
+      }
+      .brand-text span:first-child {
+        font-size: 0.8rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      .brand-text span:last-child {
+        font-size: 0.9rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+
+      nav {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 2px;
+        border-radius: 999px;
+        background: rgba(15,23,42,0.9);
+        border: 1px solid rgba(55,65,81,0.9);
+      }
+      .nav-link {
+        padding: 0.35rem 0.9rem;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        transition: background 0.16s, color 0.16s, transform 0.08s;
+      }
+      .nav-link:hover {
+        color: var(--text-main);
+        background: rgba(15,23,42,0.9);
+        transform: translateY(-1px);
+      }
+      .nav-link.active {
+        background: radial-gradient(circle at top left, var(--accent-soft), transparent 65%);
+        color: var(--accent-strong);
+        box-shadow: 0 0 0 1px rgba(56,189,248,0.35);
+      }
+
+      main {
+        max-width: 1120px;
+        margin: 1.5rem auto 3rem;
+        padding: 0 1.5rem;
+      }
+
+      .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 1.5rem;
+        margin-bottom: 1.25rem;
+      }
+      .page-title {
+        font-size: 1.35rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .page-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        margin-top: 0.35rem;
+      }
+
+      .pill {
+        border-radius: 999px;
+        padding: 0.25rem 0.85rem;
+        font-size: 0.75rem;
+        border: 1px solid rgba(55,65,81,0.9);
+        color: var(--text-muted);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+      }
+
+      .grid-cols-2 {
+        display: grid;
+        grid-template-columns: minmax(0, 2.2fr) minmax(0, 1.4fr);
+        gap: 1.5rem;
+      }
+      @media (max-width: 900px) {
+        header { padding-inline: 1rem; }
+        main { padding-inline: 1rem; }
+        .grid-cols-2 { grid-template-columns: minmax(0, 1fr); }
+      }
+
+      .card {
+        background: radial-gradient(circle at top left, rgba(15,23,42,0.95), rgba(15,23,42,0.98));
+        border-radius: 1rem;
+        border: 1px solid rgba(31,41,55,0.95);
+        box-shadow:
+          0 22px 70px rgba(15,23,42,0.9),
+          0 0 0 1px rgba(15,23,42,1);
+        padding: 1.25rem 1.4rem;
+      }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.75rem;
+      }
+      .card-title {
+        font-size: 0.95rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+      }
+      .card-subtitle {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        margin-top: 0.15rem;
+      }
+
+      .search-row {
+        display: flex;
+        gap: 0.65rem;
+        margin-top: 0.9rem;
+      }
+      .search-input {
+        flex: 1;
+        border-radius: 999px;
+        border: 1px solid rgba(55,65,81,0.9);
+        background: radial-gradient(circle at top left, #020617, #020617);
+        padding: 0.6rem 0.9rem;
+        color: var(--text-main);
+        font-size: 0.9rem;
+      }
+      .search-input::placeholder {
+        color: rgba(148,163,184,0.8);
+      }
+
+      button {
+        border-radius: 999px;
+        border: none;
+        padding: 0.5rem 1.1rem;
+        font-size: 0.82rem;
+        font-weight: 500;
+        cursor: pointer;
+        background: linear-gradient(135deg, #22c1c3, #0ea5e9);
+        color: #0b1120;
+        box-shadow: 0 10px 30px rgba(56,189,248,0.4);
+        transition: transform 0.08s, box-shadow 0.12s, filter 0.09s;
+      }
+      button.secondary {
+        background: radial-gradient(circle at top, #020617, #020617);
+        color: var(--text-muted);
+        box-shadow: none;
+        border: 1px solid rgba(55,65,81,0.9);
+      }
+      button:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.02);
+      }
+      button:active {
+        transform: translateY(0);
+        box-shadow: 0 4px 12px rgba(15,23,42,0.8);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 0.6rem;
+      }
+      th, td {
+        padding: 0.4rem 0.3rem;
+        font-size: 0.8rem;
+        border-bottom: 1px solid rgba(31,41,55,0.9);
+      }
+      th {
+        text-align: left;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--text-muted);
+        font-size: 0.74rem;
+      }
+      tr:last-child td {
+        border-bottom: none;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        border: 1px solid rgba(55,65,81,0.9);
+        font-size: 0.75rem;
+        color: var(--text-muted);
+        margin-right: 0.25rem;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.1rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid rgba(55,65,81,0.9);
+        font-size: 0.73rem;
+        color: var(--text-muted);
+      }
+      .badge--source {
+        border-color: rgba(56,189,248,0.45);
+        color: var(--accent-strong);
+      }
+      .text-muted { color: var(--text-muted); font-size: 0.8rem; }
+      .text-xs { font-size: 0.75rem; }
+      .mt-1 { margin-top: 0.25rem; }
+      .mt-2 { margin-top: 0.5rem; }
+      .mt-3 { margin-top: 0.75rem; }
     </style>
   </head>
   <body>
     <header>
-      <h1>BOOKCTRL</h1>
+      <div class="brand">
+        <div class="brand-mark">BC</div>
+        <div class="brand-text">
+          <span>LIBRARY</span>
+          <span>BOOKCTRL</span>
+        </div>
+      </div>
       <nav>
-        <a href="/search">Search</a>
-        <a href="/library">Library</a>
-        <a href="/settings/providers">Providers</a>
+        <a href="/search" class="nav-link{{#if isSearch}} active{{/if}}">Search</a>
+        <a href="/library" class="nav-link{{#if isLibrary}} active{{/if}}">Library</a>
+        <a href="/settings/providers" class="nav-link{{#if isProviders}} active{{/if}}">Providers</a>
       </nav>
     </header>
     <main>
 
-      <div class="card">
-        <h2>Search books</h2>
-        <p class="muted">Search across all enabled providers (e.g. Project Gutenberg via Gutendex).</p>
-        <form method="GET" action="/search" style="margin-top: 1rem; display: flex; gap: 0.75rem;">
-          <input type="text" name="q" placeholder="Search by title or author..." value="{{query}}" />
-          <button type="submit">Search</button>
-        </form>
+      <div class="page-header">
+        <div>
+          <div class="page-title">Search</div>
+          <p class="page-subtitle">
+            This build is currently running in <strong>local-only mode</strong>. Search results
+            will appear once providers are wired in.
+          </p>
+        </div>
+        <div class="pill">
+          <span class="text-xs">BookCTRL</span>
+          <span class="text-xs" style="opacity:.7">Preview UI</span>
+        </div>
       </div>
 
-      {{#if results.length}}
-      <div class="card">
-        <h2>Results</h2>
-        <table>
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Author</th>
-              <th>Provider</th>
-              <th>Formats</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {{#each results}}
-            <tr>
-              <td>{{this.title}}</td>
-              <td>{{this.author}}</td>
-              <td><span class="badge">{{this.providerType}}</span></td>
-              <td>
-                {{#each this.formats}}
-                  <span class="tag">{{this.format}}</span>
-                {{/each}}
-              </td>
-              <td>
-                {{#if this.formats.length}}
-                <form method="POST" action="/download" class="inline">
-                  <input type="hidden" name="providerInstanceId" value="{{this.providerInstanceId}}" />
-                  <input type="hidden" name="providerType" value="{{this.providerType}}" />
-                  <input type="hidden" name="providerBookId" value="{{this.providerBookId}}" />
-                  <input type="hidden" name="title" value="{{this.title}}" />
-                  <input type="hidden" name="author" value="{{this.author}}" />
-                  <input type="hidden" name="format" value="{{this.formats.[0].format}}" />
-                  <input type="hidden" name="url" value="{{this.formats.[0].url}}" />
-                  <button type="submit">Download</button>
-                </form>
-                {{else}}
-                <span class="muted">No downloadable formats</span>
-                {{/if}}
-              </td>
-            </tr>
-            {{/each}}
-          </tbody>
-        </table>
+      <div class="grid-cols-2">
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Query</div>
+              <div class="card-subtitle">Type a title or author to get started.</div>
+            </div>
+          </div>
+          <form method="GET" action="/search">
+            <div class="search-row">
+              <input
+                class="search-input"
+                type="text"
+                name="q"
+                placeholder="Search &mdash; e.g. &quot;Pride and Prejudice&quot;"
+                value="{{query}}"
+              />
+              <button type="submit">Search</button>
+            </div>
+          </form>
+
+          {{#if query}}
+          <p class="text-muted mt-3">
+            No external providers are connected in this build, so searches won't return
+            remote results yet. You can still browse your downloaded library.
+          </p>
+          {{/if}}
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Status</div>
+              <div class="card-subtitle">
+                Provider search is disabled in this preview. Library browsing is available.
+              </div>
+            </div>
+          </div>
+          <p class="text-muted">
+            Once providers are enabled, this panel can surface:
+          </p>
+          <ul class="text-muted text-xs" style="margin-top:0.5rem; padding-left:1.1rem;">
+            <li>Which sources are active (e.g. Gutenberg)</li>
+            <li>Per-provider hit counts</li>
+            <li>Background job status</li>
+          </ul>
+        </section>
       </div>
-      {{else}}
-        {{#if query}}
-        <div class="card">
-          <p class="muted">No results found.</p>
-        </div>
-        {{/if}}
-      {{/if}}
 
     </main>
   </body>
