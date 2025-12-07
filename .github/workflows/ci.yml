@@ -37,7 +37,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "none"
 
       - name: Install backend dependencies
         working-directory: backend
@@ -51,7 +50,7 @@ jobs:
         working-directory: backend
         run: npx prisma validate
 
-      - name: Run Prisma migration check
+      - name: Run Prisma migration diff check
         working-directory: backend
         run: npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma
 
