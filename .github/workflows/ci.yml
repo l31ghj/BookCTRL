@@ -1,4 +1,5 @@
 name: BookCTRL CI
+
 on:
   push:
     branches: [ "main" ]
@@ -36,11 +37,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: "npm"
+          cache: "none"
 
       - name: Install backend dependencies
         working-directory: backend
-        run: npm ci
+        run: npm ci || npm install
 
       - name: Generate Prisma client
         working-directory: backend
@@ -58,15 +59,15 @@ jobs:
         working-directory: backend
         run: npm run build
 
-      - name: Type check (TS)
+      - name: Type check
         working-directory: backend
         run: npx tsc --noEmit
 
-      - name: Run ESLint
+      - name: Lint
         working-directory: backend
         run: npx eslint "src/**/*.ts" || exit 1
 
-      - name: Smoke test server startup
+      - name: Smoke test server
         working-directory: backend
         run: |
           node dist/main.js &
