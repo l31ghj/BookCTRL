@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:17
+    container_name: ebook_downloader_db
+    environment:
+      POSTGRES_DB: ebooks
+      POSTGRES_USER: ebooks
+      POSTGRES_PASSWORD: ebooks
+    volumes:
+      - ebooks_db:/var/lib/postgresql/data
+    ports:
+      - "5436:5432"
+
+  backend:
+    build: ./backend
+    container_name: ebook_downloader_backend
+    environment:
+      DATABASE_URL: postgres://ebooks:ebooks@db:5432/ebooks
+      EBOOKS_DIR: /data/ebooks
+    depends_on:
+      - db
+    volumes:
+      - ebooks_data:/data/ebooks
+    ports:
+      - "8010:3000"
+
+volumes:
+  ebooks_db:
+  ebooks_data:

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Ebook Downloader</title>
+    <style>
+      body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; margin: 0; padding: 0; background: #0f172a; color: #e5e7eb; }
+      header { background: #020617; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; }
+      header h1 { margin: 0; font-size: 1.1rem; letter-spacing: 0.05em; text-transform: uppercase; color: #9ca3af; }
+      nav a { color: #9ca3af; margin-left: 1rem; text-decoration: none; font-size: 0.9rem; }
+      nav a:hover { color: #e5e7eb; }
+      main { padding: 2rem; max-width: 960px; margin: 0 auto; }
+      .card { background: #020617; border-radius: 0.75rem; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #1f2937; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.6); }
+      h2 { margin-top: 0; margin-bottom: 0.5rem; font-size: 1.1rem; }
+      input[type="text"], select { background: #020617; border-radius: 0.5rem; border: 1px solid #374151; padding: 0.5rem 0.75rem; color: #e5e7eb; width: 100%; }
+      button { background: #4f46e5; border: none; color: white; padding: 0.5rem 1rem; border-radius: 999px; cursor: pointer; font-weight: 500; font-size: 0.9rem; }
+      button.secondary { background: #111827; border: 1px solid #374151; }
+      button:disabled { opacity: 0.5; cursor: default; }
+      table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+      th, td { padding: 0.5rem; border-bottom: 1px solid #1f2937; text-align: left; font-size: 0.85rem; }
+      th { color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.75rem; }
+      .tag { display: inline-flex; align-items: center; padding: 0.15rem 0.5rem; border-radius: 999px; border: 1px solid #4b5563; font-size: 0.75rem; color: #9ca3af; margin-right: 0.25rem; }
+      .badge { border-radius: 999px; padding: 0.15rem 0.5rem; font-size: 0.75rem; border: 1px solid #4b5563; }
+      .muted { color: #9ca3af; font-size: 0.85rem; }
+      form.inline { display: inline; }
+      .pill-toggle { display: inline-flex; align-items: center; gap: 0.5rem; }
+      .pill-toggle span { font-size: 0.8rem; }
+      .pill-toggle input { margin: 0; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>EBOOK DOWNLOADER</h1>
+      <nav>
+        <a href="/search">Search</a>
+        <a href="/library">Library</a>
+        <a href="/settings/providers">Providers</a>
+      </nav>
+    </header>
+    <main>
+
+      <div class="card">
+        <h2>Search books</h2>
+        <p class="muted">Search across all enabled providers (e.g. Project Gutenberg via Gutendex).</p>
+        <form method="GET" action="/search" style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+          <input type="text" name="q" placeholder="Search by title or author..." value="{{query}}" />
+          <button type="submit">Search</button>
+        </form>
+      </div>
+
+      {{#if results.length}}
+      <div class="card">
+        <h2>Results</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Author</th>
+              <th>Provider</th>
+              <th>Formats</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each results}}
+            <tr>
+              <td>{{this.title}}</td>
+              <td>{{this.author}}</td>
+              <td><span class="badge">{{this.providerType}}</span></td>
+              <td>
+                {{#each this.formats}}
+                  <span class="tag">{{this.format}}</span>
+                {{/each}}
+              </td>
+              <td>
+                {{#if this.formats.length}}
+                <form method="POST" action="/download" class="inline">
+                  <input type="hidden" name="providerInstanceId" value="{{this.providerInstanceId}}" />
+                  <input type="hidden" name="providerType" value="{{this.providerType}}" />
+                  <input type="hidden" name="providerBookId" value="{{this.providerBookId}}" />
+                  <input type="hidden" name="title" value="{{this.title}}" />
+                  <input type="hidden" name="author" value="{{this.author}}" />
+                  <input type="hidden" name="format" value="{{this.formats.[0].format}}" />
+                  <input type="hidden" name="url" value="{{this.formats.[0].url}}" />
+                  <button type="submit">Download</button>
+                </form>
+                {{else}}
+                <span class="muted">No downloadable formats</span>
+                {{/if}}
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+        {{#if query}}
+        <div class="card">
+          <p class="muted">No results found.</p>
+        </div>
+        {{/if}}
+      {{/if}}
+
+    </main>
+  </body>
+</html>
