@@ -23,7 +23,7 @@ export class AppController {
   async searchPage(@Query('q') q?: string) {
     const query = q || '';
 
-    // Minimal mode: no providers yet
+    // Minimal mode: no external providers wired yet
     const providers: unknown[] = [];
     const results: unknown[] = [];
 
@@ -42,5 +42,13 @@ export class AppController {
   async deleteBook(@Param('id') id: string) {
     await this.appService.deleteBook(id);
     return;
+  }
+
+  @Get('settings/providers')
+  @Render('providers')
+  providersPage() {
+    const providers: unknown[] = [];
+    const types: unknown[] = [];
+    return { providers, types };
   }
 }
