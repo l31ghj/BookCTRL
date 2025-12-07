@@ -1,6 +1,5 @@
 
 import {
-  Body,
   Controller,
   Get,
   Param,
@@ -23,8 +22,11 @@ export class AppController {
   @Render('search')
   async searchPage(@Query('q') q?: string) {
     const query = q || '';
-    const providers = await this.appService.getProviders();
-    const results = query ? await this.appService.search(query) : [];
+
+    // Minimal mode: No providers yet
+    const providers = [];
+    const results = [];
+
     return { query, providers, results };
   }
 
