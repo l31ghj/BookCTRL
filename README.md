@@ -42,11 +42,11 @@ Then open http://localhost:3000
 
 ### Configure Gutenberg provider
 
-1. Go to **Providers**.
+1. Go to **Settings → Providers** in the UI.
 2. Add:
    - Type: `gutenberg`
    - Name: `Gutenberg`
-   - Base URL: `https://gutendex.com`
+   - Base URL: `https://gutendex.com` (or leave blank to use the default)
 
 Then you can search and download books.
 

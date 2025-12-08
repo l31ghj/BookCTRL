@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Body,
   Query,
   Redirect,
   Render,
@@ -23,18 +24,16 @@ export class AppController {
   async searchPage(@Query('q') q?: string) {
     const query = q || '';
 
-    // Minimal mode: no external providers wired yet
-    const providers: unknown[] = [];
-    const results: unknown[] = [];
+    const { providers, results } = await this.appService.search(query);
 
-    return { query, providers, results };
+    return { query, providers, results, isSearch: true };
   }
 
   @Get('library')
   @Render('library')
   async libraryPage() {
     const books = await this.appService.listLibrary();
-    return { books };
+    return { books, isLibrary: true };
   }
 
   @Post('library/:id/delete')
@@ -44,11 +43,41 @@ export class AppController {
     return;
   }
 
+  @Post('search/download')
+  @Redirect()
+  async download(@Body() body: any) {
+    await this.appService.downloadAndStore(body);
+    const q = body.query ? `?q=${encodeURIComponent(body.query)}` : '';
+    return { url: `/search${q}` };
+  }
+
   @Get('settings/providers')
   @Render('providers')
-  providersPage() {
-    const providers: unknown[] = [];
-    const types: unknown[] = [];
-    return { providers, types };
+  async providersPage() {
+    const providers = await this.appService.listProviders();
+    const types = this.appService.listProviderTypes();
+    return { providers, types, isProviders: true };
+  }
+
+  @Post('settings/providers')
+  @Redirect('/settings/providers')
+  async createProvider(@Body() body: any) {
+    await this.appService.createProvider(body);
+    return;
+  }
+
+  @Post('settings/providers/:id/toggle')
+  @Redirect('/settings/providers')
+  async toggleProvider(@Param('id') id: string, @Body('enabled') enabled: string) {
+    const isEnabled = enabled === 'true';
+    await this.appService.setProviderEnabled(id, isEnabled);
+    return;
+  }
+
+  @Post('settings/providers/:id/delete')
+  @Redirect('/settings/providers')
+  async deleteProvider(@Param('id') id: string) {
+    await this.appService.deleteProvider(id);
+    return;
   }
 }

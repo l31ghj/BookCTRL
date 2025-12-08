@@ -6,12 +6,16 @@ import axios from 'axios';
 import { createWriteStream } from 'fs';
 import { mkdir, stat } from 'fs/promises';
 import * as path from 'path';
+import { ProvidersRuntimeService } from './providers/providers-runtime.service';
 
 @Injectable()
 export class AppService {
   private readonly ebooksDir: string;
 
-  constructor(private readonly prisma: PrismaService) {
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly providersRuntime: ProvidersRuntimeService,
+  ) {
     this.ebooksDir = process.env.EBOOKS_DIR || '/data/ebooks';
   }
 
@@ -81,5 +85,76 @@ export class AppService {
     });
 
     return { book, file };
+  }
+
+  async search(query: string) {
+    const providers = await this.prisma.provider.findMany({
+      orderBy: { createdAt: 'asc' },
+    });
+    if (!query) {
+      return { providers, results: [] };
+    }
+
+    const enabledProviders = providers.filter((p) => p.isEnabled);
+    const results = [];
+
+    for (const provider of enabledProviders) {
+      const runtime = this.providersRuntime.getProviderByType(provider.type);
+      if (!runtime) continue;
+
+      try {
+        const providerResults = await runtime.search(query, provider.settings || {});
+        results.push(
+          ...providerResults.map((r) => ({
+            ...r,
+            providerInstanceId: provider.id,
+            providerName: provider.name,
+          })),
+        );
+      } catch (err) {
+        // swallow per-provider errors so the page still renders
+        console.error(`Provider ${provider.name} failed`, err);
+      }
+    }
+
+    return { providers, results };
+  }
+
+  listProviders() {
+    return this.prisma.provider.findMany({ orderBy: { createdAt: 'asc' } });
+  }
+
+  listProviderTypes() {
+    return this.providersRuntime.listTypes().map((type) => {
+      const defaults =
+        type === 'gutenberg'
+          ? { baseUrl: 'https://gutendex.com' }
+          : {};
+      return { type, defaults };
+    });
+  }
+
+  async createProvider(input: any) {
+    const type = input.type;
+    const runtime = this.providersRuntime.getProviderByType(type);
+    if (!runtime) {
+      throw new Error('Unknown provider type');
+    }
+
+    const name = (input.name || runtime.type).trim();
+    const settings: Record<string, any> = {};
+    if (input.baseUrl) settings.baseUrl = input.baseUrl;
+
+    return this.prisma.provider.create({
+      data: { type, name, isEnabled: true, settings },
+    });
+  }
+
+  async setProviderEnabled(id: string, isEnabled: boolean) {
+    return this.prisma.provider.update({ where: { id }, data: { isEnabled } });
+  }
+
+  async deleteProvider(id: string) {
+    return this.prisma.provider.delete({ where: { id } });
   }
 }
