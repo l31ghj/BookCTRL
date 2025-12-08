@@ -28,6 +28,7 @@ export class AppService {
     for (const f of files) {
       try { await fs.promises.unlink(f.path); } catch {}
     }
+    await this.prisma.file.deleteMany({ where: { bookId } });
     await this.prisma.book.delete({ where: { id: bookId } });
   }
 
