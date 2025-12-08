@@ -48,14 +48,22 @@ export class AppController {
 
   @Post('search/download')
   async download(@Body() body: any, @Req() req: Request, @Res() res: Response) {
-    await this.appService.downloadAndStore(body);
-    const q = body.query ? `?q=${encodeURIComponent(body.query)}` : '';
+    try {
+      await this.appService.downloadAndStore(body);
+      const q = body.query ? `?q=${encodeURIComponent(body.query)}` : '';
 
-    if (req.headers.accept && req.headers.accept.includes('application/json')) {
-      return res.json({ ok: true, redirect: `/search${q}` });
+      if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        return res.json({ ok: true, redirect: `/search${q}` });
+      }
+
+      return res.redirect(`/search${q}`);
+    } catch (err: any) {
+      const message = err?.message || 'Download failed';
+      if (req.headers.accept && req.headers.accept.includes('application/json')) {
+        return res.status(500).json({ ok: false, error: message });
+      }
+      return res.status(500).send(message);
     }
-
-    return res.redirect(`/search${q}`);
   }
 
   @Get('settings/providers')

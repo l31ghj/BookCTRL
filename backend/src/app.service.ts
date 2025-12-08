@@ -34,12 +34,16 @@ export class AppService {
   async downloadAndStore(input: any) {
     await mkdir(this.ebooksDir, { recursive: true });
 
-    function safe(s: string) {
+    function safe(s?: string) {
+      if (!s) return '';
       return s.replace(/[^a-zA-Z0-9\-\s]+/g, '').trim().replace(/\s+/g, ' ');
     }
 
-    const author = input.author ? safe(input.author) : '';
+    const author = safe(input.author);
     const title = safe(input.title);
+    if (!title) {
+      throw new Error('Missing title for download');
+    }
     let base = author ? `${author} - ${title}` : title;
     const filename = `${base}.${input.format}`;
     const filepath = path.join(this.ebooksDir, filename);
