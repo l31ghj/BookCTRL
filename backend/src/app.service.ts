@@ -178,6 +178,23 @@ export class AppService {
       const $ = load(res.data);
       const links: string[] = [];
 
+      const ipfsCids: string[] = [];
+      $('a[href^="ipfs://"]').each((_, el) => {
+        const href = $(el).attr('href');
+        if (href) ipfsCids.push(href.replace('ipfs://', ''));
+      });
+      $('span:contains("IPFS CID")')
+        .next('span')
+        .each((_, el) => {
+          const cid = $(el).text().trim();
+          if (cid) ipfsCids.push(cid);
+        });
+
+      ipfsCids.forEach((cid) => {
+        links.push(`https://cloudflare-ipfs.com/ipfs/${cid}`);
+        links.push(`https://ipfs.io/ipfs/${cid}`);
+      });
+
       $('a[href*="ipfs_downloads/md5"]').each((_, el) => {
         const href = $(el).attr('href');
         if (href) links.push(href);
