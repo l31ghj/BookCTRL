@@ -85,12 +85,23 @@ export class AnnasArchiveProvider implements EbookProvider {
         headers: { 'User-Agent': 'BookCTRL/1.0 (+https://github.com/) axios' },
       });
       const $ = load(detail.data);
-      const link = $('a.js-download-link')
+      const slowLinks = $('h3:contains("Slow downloads")')
+        .next('p')
+        .next('ul')
+        .find('a.js-download-link')
         .map((_: number, el: CheerioElement) => $(el).attr('href'))
         .get()
-        .find((href) => !!href);
-      if (!link) return;
-      return new URL(link, baseUrl).toString();
+        .filter(Boolean);
+
+      const fallbackLinks = $('a.js-download-link')
+        .map((_: number, el: CheerioElement) => $(el).attr('href'))
+        .get()
+        .filter(Boolean);
+
+      const candidates = [...slowLinks, ...fallbackLinks];
+      if (!candidates.length) return;
+
+      return new URL(candidates[0]!, baseUrl).toString();
     } catch {
       return;
     }
