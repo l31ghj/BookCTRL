@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
-import { load, Element } from 'cheerio';
+import { load } from 'cheerio';
+import type { Element as CheerioElement } from 'domhandler';
 import { EbookProvider, EbookSearchResult } from './provider.interface';
 
 @Injectable()
@@ -23,14 +24,14 @@ export class AnnasArchiveProvider implements EbookProvider {
     const $ = load(res.data);
     const results: EbookSearchResult[] = [];
 
-    $('div.search-result').each((_: number, el: Element) => {
+    $('div.search-result').each((_: number, el: CheerioElement) => {
       const title = $(el).find('.result-title').text().trim();
       const author = $(el).find('.result-author').text().trim();
       const links: { format: string; url: string }[] = [];
 
       $(el)
         .find('a')
-        .each((_: number, a: Element) => {
+        .each((_: number, a: CheerioElement) => {
           const href = $(a).attr('href');
           const text = ($(a).text() || '').toLowerCase();
           if (!href) return;
