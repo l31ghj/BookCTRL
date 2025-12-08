@@ -325,7 +325,10 @@
               </td>
               <td>
                 {{#each this.files}}
-                  <a href="/files/{{this.id}}" class="tag">{{this.format}}</a>
+                  <a href="/files/{{this.id}}" class="tag">
+                    {{this.format}}
+                    {{#if this.sizeLabel}} · {{this.sizeLabel}}{{/if}}
+                  </a>
                 {{/each}}
               </td>
               <td>

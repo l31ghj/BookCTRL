@@ -399,7 +399,10 @@
                           <input type="hidden" name="providerBookId" value="{{../providerBookId}}">
                           <input type="hidden" name="format" value="{{format}}">
                           <input type="hidden" name="url" value="{{url}}">
-                          <button type="submit" class="secondary">Get {{format}}</button>
+                          <button type="submit" class="secondary">
+                            Get {{format}}
+                            {{#if sizeLabel}} ({{sizeLabel}}){{/if}}
+                          </button>
                           <div class="progress" aria-hidden="true">
                             <div class="progress-bar"></div>
                           </div>

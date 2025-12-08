@@ -1,6 +1,8 @@
 export interface EbookFormat {
   format: string;
   url: string;
+  sizeBytes?: number;
+  sizeLabel?: string;
 }
 
 export interface EbookSearchResult {

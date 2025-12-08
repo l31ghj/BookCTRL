@@ -19,8 +19,28 @@ export class AppService {
     this.ebooksDir = process.env.EBOOKS_DIR || '/data/ebooks';
   }
 
+  private formatBytes(bytes?: number | null): string | undefined {
+    if (bytes == null || isNaN(bytes)) return;
+    if (bytes < 1024) return `${bytes} B`;
+    const units = ['KB', 'MB', 'GB', 'TB'];
+    let value = bytes / 1024;
+    let unitIndex = 0;
+    while (value >= 1024 && unitIndex < units.length - 1) {
+      value /= 1024;
+      unitIndex++;
+    }
+    return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unitIndex]}`;
+  }
+
   async listLibrary() {
-    return this.prisma.book.findMany({ include: { files: true } });
+    const books = await this.prisma.book.findMany({ include: { files: true } });
+    return books.map((b) => ({
+      ...b,
+      files: b.files.map((f) => ({
+        ...f,
+        sizeLabel: this.formatBytes(f.sizeBytes),
+      })),
+    }));
   }
 
   async deleteBook(bookId: string) {
@@ -112,9 +132,12 @@ export class AppService {
         results.push(
           ...providerResults
             .map((r) => {
-              const formats = (r.formats || []).filter(
-                (f) => typeof f.format === 'string' && f.format.toLowerCase() === 'epub',
-              );
+              const formats = (r.formats || [])
+                .filter((f) => typeof f.format === 'string' && f.format.toLowerCase() === 'epub')
+                .map((f) => ({
+                  ...f,
+                  sizeLabel: this.formatBytes(f.sizeBytes),
+                }));
               return { ...r, formats };
             })
             .filter((r) => r.formats.length > 0)

@@ -43,6 +43,7 @@ export class AnnasArchiveProvider implements EbookProvider {
       const metaText = $(card).find('div.text-gray-800').text().trim();
       const formatFromMeta = this.extractFormat(metaText);
       const fallbackFormat = this.extractFormat($(card).text());
+      const sizeBytes = this.extractSize(metaText);
 
       const format = formatFromMeta || fallbackFormat || 'download';
       const downloadUrl = await this.fetchDownloadLink(baseUrl, md5);
@@ -56,7 +57,7 @@ export class AnnasArchiveProvider implements EbookProvider {
         language: undefined,
         coverUrl: null,
         year: undefined,
-        formats: downloadUrl ? [{ format, url: downloadUrl }] : [],
+        formats: downloadUrl ? [{ format, url: downloadUrl, sizeBytes }] : [],
       });
     }
 
@@ -66,6 +67,16 @@ export class AnnasArchiveProvider implements EbookProvider {
   private extractFormat(text: string): string | undefined {
     const match = text.match(/\b(epub|pdf|mobi|azw3|djvu|rtf|txt)\b/i);
     return match ? match[1].toLowerCase() : undefined;
+  }
+
+  private extractSize(text: string): number | undefined {
+    const match = text.match(/([\d\.]+)\s*(kb|mb|gb)/i);
+    if (!match) return;
+    const value = parseFloat(match[1]);
+    const unit = match[2].toLowerCase();
+    if (isNaN(value)) return;
+    const multiplier = unit === 'gb' ? 1024 * 1024 * 1024 : unit === 'mb' ? 1024 * 1024 : 1024;
+    return Math.round(value * multiplier);
   }
 
   private async fetchDownloadLink(baseUrl: string, md5: string): Promise<string | undefined> {
