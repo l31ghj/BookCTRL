@@ -13,6 +13,7 @@
     "prisma:migrate": "prisma migrate dev --name init"
   },
   "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
