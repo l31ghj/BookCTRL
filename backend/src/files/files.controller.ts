@@ -17,7 +17,7 @@ export class FilesController {
       return res.status(404).send('File not found');
     }
 
-    function safeName(s?: string) {
+    function safeName(s?: string | null) {
       if (!s) return '';
       return s.replace(/[^a-zA-Z0-9\-\s]+/g, '').trim().replace(/\s+/g, ' ');
     }
