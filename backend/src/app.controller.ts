@@ -4,12 +4,15 @@ import {
   Get,
   Param,
   Post,
+  Req,
+  Res,
   Body,
   Query,
   Redirect,
   Render,
 } from '@nestjs/common';
 import { AppService } from './app.service';
+import { Request, Response } from 'express';
 
 @Controller()
 export class AppController {
@@ -44,11 +47,15 @@ export class AppController {
   }
 
   @Post('search/download')
-  @Redirect()
-  async download(@Body() body: any) {
+  async download(@Body() body: any, @Req() req: Request, @Res() res: Response) {
     await this.appService.downloadAndStore(body);
     const q = body.query ? `?q=${encodeURIComponent(body.query)}` : '';
-    return { url: `/search${q}` };
+
+    if (req.headers.accept && req.headers.accept.includes('application/json')) {
+      return res.json({ ok: true, redirect: `/search${q}` });
+    }
+
+    return res.redirect(`/search${q}`);
   }
 
   @Get('settings/providers')
