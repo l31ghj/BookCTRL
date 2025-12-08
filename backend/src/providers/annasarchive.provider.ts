@@ -85,6 +85,11 @@ export class AnnasArchiveProvider implements EbookProvider {
         headers: { 'User-Agent': 'BookCTRL/1.0 (+https://github.com/) axios' },
       });
       const $ = load(detail.data);
+      const ipfsLinks = $('a[href*="ipfs_downloads"]')
+        .map((_: number, el: CheerioElement) => $(el).attr('href'))
+        .get()
+        .filter(Boolean);
+
       const slowLinks = $('h3:contains("Slow downloads")')
         .next('p')
         .next('ul')
@@ -98,10 +103,12 @@ export class AnnasArchiveProvider implements EbookProvider {
         .get()
         .filter(Boolean);
 
-      const candidates = [...slowLinks, ...fallbackLinks];
+      const candidates = [...ipfsLinks, ...slowLinks, ...fallbackLinks];
       if (!candidates.length) return;
 
-      return new URL(candidates[0]!, baseUrl).toString();
+      const first = candidates.find(Boolean);
+      if (!first) return;
+      return new URL(first, baseUrl).toString();
     } catch {
       return;
     }
