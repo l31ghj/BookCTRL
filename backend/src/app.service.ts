@@ -12,6 +12,8 @@ import { ProvidersRuntimeService } from './providers/providers-runtime.service';
 @Injectable()
 export class AppService {
   private readonly ebooksDir: string;
+  private readonly defaultUserAgent =
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
   constructor(
     private readonly prisma: PrismaService,
@@ -27,6 +29,10 @@ export class AppService {
     } catch {
       return fallback;
     }
+  }
+
+  private sleep(ms: number) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   private formatBytes(bytes?: number | null): string | undefined {
@@ -163,6 +169,17 @@ export class AppService {
       (input.providerBookId as string | undefined)?.replace(/^md5:/i, '') ||
       this.extractMd5FromUrl(providedUrl);
 
+    const candidateLinks: string[] = [];
+
+    // 1) Try slow download servers directly (paths 0-1, servers 0-6)
+    if (md5) {
+      const slowLink = await this.trySlowDownloads(baseUrl, md5);
+      if (slowLink) {
+        candidateLinks.push(slowLink);
+      }
+    }
+
+    // 2) Parse MD5 page for IPFS / other links as fallback
     const md5PageUrl =
       providedUrl.includes('/md5/') || providedUrl.includes('md5:')
         ? new URL(providedUrl, baseUrl).toString()
@@ -172,7 +189,7 @@ export class AppService {
 
     try {
       const res = await axios.get(md5PageUrl, {
-        headers: { 'User-Agent': 'BookCTRL/1.0 (+https://github.com/) axios' },
+        headers: { 'User-Agent': this.defaultUserAgent },
         maxRedirects: 5,
       });
       const $ = load(res.data);
@@ -214,11 +231,13 @@ export class AppService {
         .filter(Boolean)
         .map((href) => new URL(href!, baseUrl).toString());
 
-      const unique = Array.from(new Set(absolute));
-      if (unique.length) return unique;
+      candidateLinks.push(...absolute);
     } catch {
-      // fall back to provided url
+      // ignore
     }
+
+    const unique = Array.from(new Set(candidateLinks));
+    if (unique.length) return unique;
 
     return [new URL(providedUrl, baseUrl).toString()];
   }
@@ -232,6 +251,76 @@ export class AppService {
     } catch {
       return;
     }
+  }
+
+  private async trySlowDownloads(baseUrl: string, md5: string): Promise<string | undefined> {
+    const MAX_PATHS = 2; // 0-1
+    const MAX_SERVERS = 7; // 0-6
+
+    for (let pathIndex = 0; pathIndex < MAX_PATHS; pathIndex++) {
+      for (let serverIndex = 0; serverIndex < MAX_SERVERS; serverIndex++) {
+        const slowUrl = `${baseUrl}/slow_download/${md5}/${pathIndex}/${serverIndex}`;
+        try {
+          const direct = await this.fetchSlowDirectLink(slowUrl);
+          if (direct) return direct;
+        } catch {
+          continue;
+        }
+      }
+    }
+
+    return;
+  }
+
+  private async fetchSlowDirectLink(slowUrl: string): Promise<string | undefined> {
+    const client = axios.create({
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': this.defaultUserAgent,
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+    });
+
+    const fetchHtml = async () => {
+      const res = await client.get(slowUrl);
+      if (typeof res.data !== 'string') return '';
+      return res.data as string;
+    };
+
+    let html = await fetchHtml();
+
+    // Check for countdown
+    const countdownMatch = html.match(/js-partner-countdown[^>]*>(\d+)</i);
+    if (countdownMatch) {
+      const seconds = parseInt(countdownMatch[1], 10);
+      if (seconds > 0 && seconds < 300) {
+        await this.sleep((seconds + 2) * 1000);
+        html = await fetchHtml();
+      }
+    }
+
+    const patterns = [
+      /navigator\.clipboard\.writeText\(['"]([^'"]+)['"]/i,
+      /<span[^>]*class=["'][^"']*whitespace-normal[^"']*["'][^>]*>(https?:\/\/[^<]+)<\/span>/i,
+      /<a[^>]*href=["']([^"']*)"[^>]*download[^>]*>/i,
+      /<a[^>]*download[^>]*href=["']([^"']*)"[^>]*>/i,
+      /window\.location\.href\s*=\s*["']([^"']*)["']/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        let url = match[1]
+          .replace(/&gt;/g, '>')
+          .replace(/&lt;/g, '<')
+          .replace(/&amp;/g, '&');
+        if (url.startsWith('http') && !url.includes('slow_download')) {
+          return url;
+        }
+      }
+    }
+
+    return;
   }
 
   async search(query: string) {
