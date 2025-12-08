@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
 import { ProvidersRuntimeService } from './providers/providers-runtime.service';
 import { GutenbergProvider } from './providers/gutenberg.provider';
+import { AnnasArchiveProvider } from './providers/annasarchive.provider';
 import { FilesController } from './files/files.controller';
 import { OpdsModule } from './opds/opds.module';
 
@@ -15,6 +16,7 @@ import { OpdsModule } from './opds/opds.module';
     PrismaService,
     ProvidersRuntimeService,
     GutenbergProvider,
+    AnnasArchiveProvider,
   ],
 })
 export class AppModule {}

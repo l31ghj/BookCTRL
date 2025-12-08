@@ -134,6 +134,8 @@ export class AppService {
       const defaults =
         type === 'gutenberg'
           ? { baseUrl: 'https://gutendex.com' }
+          : type === 'annas-archive'
+          ? { baseUrl: 'https://annas-archive.org' }
           : {};
       return { type, defaults };
     });
