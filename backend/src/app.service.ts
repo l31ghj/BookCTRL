@@ -110,11 +110,19 @@ export class AppService {
       try {
         const providerResults = await runtime.search(query, provider.settings || {});
         results.push(
-          ...providerResults.map((r) => ({
-            ...r,
-            providerInstanceId: provider.id,
-            providerName: provider.name,
-          })),
+          ...providerResults
+            .map((r) => {
+              const formats = (r.formats || []).filter(
+                (f) => typeof f.format === 'string' && f.format.toLowerCase() === 'epub',
+              );
+              return { ...r, formats };
+            })
+            .filter((r) => r.formats.length > 0)
+            .map((r) => ({
+              ...r,
+              providerInstanceId: provider.id,
+              providerName: provider.name,
+            })),
         );
       } catch (err) {
         // swallow per-provider errors so the page still renders
