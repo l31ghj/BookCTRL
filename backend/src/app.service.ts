@@ -6,6 +6,7 @@ import axios from 'axios';
 import { createWriteStream } from 'fs';
 import { mkdir, stat } from 'fs/promises';
 import * as path from 'path';
+import { load } from 'cheerio';
 import { ProvidersRuntimeService } from './providers/providers-runtime.service';
 
 @Injectable()
@@ -17,6 +18,15 @@ export class AppService {
     private readonly providersRuntime: ProvidersRuntimeService,
   ) {
     this.ebooksDir = process.env.EBOOKS_DIR || '/data/ebooks';
+  }
+
+  private resolveBaseUrl(url: string, fallback: string) {
+    try {
+      const u = new URL(url, fallback);
+      return u.origin;
+    } catch {
+      return fallback;
+    }
   }
 
   private formatBytes(bytes?: number | null): string | undefined {
@@ -78,7 +88,36 @@ export class AppService {
       counter++;
     }
 
-    const response = await axios.get(input.url, { responseType: 'stream' });
+    const downloadUrls = await this.resolveDownloadUrls(input);
+
+    let response: any = null;
+    for (const url of downloadUrls) {
+      try {
+        const res = await axios.get(url, {
+          responseType: 'stream',
+          maxRedirects: 5,
+          validateStatus: (s) => s >= 200 && s < 400,
+        });
+        const contentType = (res.headers['content-type'] || '').toLowerCase();
+        const contentLength = Number(res.headers['content-length'] || 0);
+        if (contentType.includes('text/html') || contentType.includes('text/plain')) {
+          if (res.data?.destroy) res.data.destroy();
+          continue;
+        }
+        if (contentLength && contentLength < 10 * 1024) {
+          if (res.data?.destroy) res.data.destroy();
+          continue;
+        }
+        response = res;
+        break;
+      } catch (err) {
+        continue;
+      }
+    }
+
+    if (!response) {
+      throw new Error('No usable download link found');
+    }
 
     await new Promise<void>((resolve, reject) => {
       const ws = createWriteStream(finalPath);
@@ -110,6 +149,72 @@ export class AppService {
     });
 
     return { book, file };
+  }
+
+  private async resolveDownloadUrls(input: any): Promise<string[]> {
+    const providedUrl: string = input.url;
+    const providerType: string = input.providerType;
+    if (providerType !== 'annas-archive') {
+      return [providedUrl];
+    }
+
+    const baseUrl = this.resolveBaseUrl(providedUrl, 'https://annas-archive.org');
+    const md5 =
+      (input.providerBookId as string | undefined)?.replace(/^md5:/i, '') ||
+      this.extractMd5FromUrl(providedUrl);
+
+    const md5PageUrl =
+      providedUrl.includes('/md5/') || providedUrl.includes('md5:')
+        ? new URL(providedUrl, baseUrl).toString()
+        : md5
+        ? `${baseUrl}/md5/${md5}`
+        : new URL(providedUrl, baseUrl).toString();
+
+    try {
+      const res = await axios.get(md5PageUrl, {
+        headers: { 'User-Agent': 'BookCTRL/1.0 (+https://github.com/) axios' },
+        maxRedirects: 5,
+      });
+      const $ = load(res.data);
+      const links: string[] = [];
+
+      $('a[href*="ipfs_downloads/md5"]').each((_, el) => {
+        const href = $(el).attr('href');
+        if (href) links.push(href);
+      });
+
+      $('a[href*="/slow_download/"]').each((_, el) => {
+        const href = $(el).attr('href');
+        if (href) links.push(href);
+      });
+
+      $('a.js-download-link').each((_, el) => {
+        const href = $(el).attr('href');
+        if (href) links.push(href);
+      });
+
+      const absolute = links
+        .filter(Boolean)
+        .map((href) => new URL(href!, baseUrl).toString());
+
+      const unique = Array.from(new Set(absolute));
+      if (unique.length) return unique;
+    } catch {
+      // fall back to provided url
+    }
+
+    return [new URL(providedUrl, baseUrl).toString()];
+  }
+
+  private extractMd5FromUrl(url: string): string | undefined {
+    try {
+      const u = new URL(url);
+      const parts = u.pathname.split('/');
+      const md5Part = parts.find((p) => p && p.length === 32);
+      return md5Part;
+    } catch {
+      return;
+    }
   }
 
   async search(query: string) {
