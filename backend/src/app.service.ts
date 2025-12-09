@@ -215,6 +215,12 @@ export class AppService {
       this.extractMd5FromUrl(providedUrl);
 
     const candidateLinks: string[] = [];
+    // Try the provided URL first (could already be a direct or IPFS link)
+    try {
+      candidateLinks.push(new URL(providedUrl, baseUrl).toString());
+    } catch {
+      // ignore parse errors
+    }
 
     // 1) Try slow download servers directly (paths 0-1, servers 0-6)
     if (md5) {
@@ -327,13 +333,18 @@ export class AppService {
     };
     const PAGE_TIMEOUT_MS = 120000; // allow for challenge + 30s countdown
 
-    const fetchHtml = async () => {
+    const fetchPage = async () => {
       const res = await this.fetchWithBypass(slowUrl, headers, PAGE_TIMEOUT_MS);
-      if (typeof res.data !== 'string') return '';
-      return res.data as string;
+      const html = typeof res.data === 'string' ? (res.data as string) : '';
+      return { html, finalUrl: res.url as string | undefined };
     };
 
-    let html = await fetchHtml();
+    let { html, finalUrl } = await fetchPage();
+
+    // If FlareSolverr/direct already resolved to a non-slow_download URL, use it
+    if (finalUrl && finalUrl.startsWith('http') && !finalUrl.includes('slow_download')) {
+      return finalUrl;
+    }
 
     // Check for countdown
     const countdownMatch = html.match(/js-partner-countdown[^>]*>(\d+)</i);
@@ -341,7 +352,12 @@ export class AppService {
       const seconds = parseInt(countdownMatch[1], 10);
       if (seconds > 0 && seconds < 300) {
         await this.sleep((seconds + 2) * 1000);
-        html = await fetchHtml();
+        const next = await fetchPage();
+        html = next.html;
+        finalUrl = next.finalUrl || finalUrl;
+        if (finalUrl && finalUrl.startsWith('http') && !finalUrl.includes('slow_download')) {
+          return finalUrl;
+        }
       }
     }
 
@@ -351,6 +367,8 @@ export class AppService {
       /<a[^>]*href=["']([^"']*)"[^>]*download[^>]*>/i,
       /<a[^>]*download[^>]*href=["']([^"']*)"[^>]*>/i,
       /window\.location\.href\s*=\s*["']([^"']*)["']/i,
+      /href=["'](https?:\/\/[^"']+\.(?:epub|pdf|mobi|azw3|djvu|txt)[^"']*)["']/i,
+      /(https?:\/\/[^\s"'<>]+?\.(?:epub|pdf|mobi|azw3|djvu|txt)[^\s"'<>]*)/i,
     ];
 
     for (const pattern of patterns) {
@@ -364,6 +382,11 @@ export class AppService {
           return url;
         }
       }
+    }
+
+    // As a last resort, if finalUrl became non-slow_download after patterns
+    if (finalUrl && finalUrl.startsWith('http') && !finalUrl.includes('slow_download')) {
+      return finalUrl;
     }
 
     return;
