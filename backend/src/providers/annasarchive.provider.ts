@@ -20,7 +20,7 @@ export class AnnasArchiveProvider implements EbookProvider {
     const searchUrl = new URL('/search', baseUrl);
     searchUrl.searchParams.set('q', query);
 
-    const html = await this.fetchPage(searchUrl.toString(), headers);
+    const html = await this.fetchSearchPage(searchUrl.toString(), headers);
     const $ = load(html);
     const results: EbookSearchResult[] = [];
 
@@ -109,6 +109,29 @@ export class AnnasArchiveProvider implements EbookProvider {
       return new URL(first, baseUrl).toString();
     } catch {
       return;
+    }
+  }
+
+  private async fetchSearchPage(url: string, headers: Record<string, string>): Promise<string> {
+    try {
+      const res = await axios.get(url, {
+        headers,
+        timeout: 15000,
+        maxRedirects: 5,
+        validateStatus: (s) => s >= 200 && s < 400,
+      });
+      return res.data;
+    } catch {
+      // Fallback to FlareSolverr only if direct fails
+      if (this.flaresolverr.isEnabled()) {
+        try {
+          const res = await this.flaresolverr.fetch(url, 20000);
+          if (res?.data) return res.data;
+        } catch {
+          // swallow and rethrow below
+        }
+      }
+      throw new Error('Failed to fetch search page');
     }
   }
 
