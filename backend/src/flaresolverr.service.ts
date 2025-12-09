@@ -19,7 +19,7 @@ export class FlareSolverrService {
 
   async get(
     url: string,
-    headers: Record<string, string> = {},
+    _headers: Record<string, string> = {},
     timeoutMs = 20000,
   ): Promise<FlareSolverrResult | undefined> {
     if (!this.baseUrl) return;
@@ -28,7 +28,6 @@ export class FlareSolverrService {
     const payload = {
       cmd: 'request.get',
       url,
-      headers,
       maxTimeout: timeoutMs,
     };
 
