@@ -7,6 +7,7 @@ import { GutenbergProvider } from './providers/gutenberg.provider';
 import { AnnasArchiveProvider } from './providers/annasarchive.provider';
 import { FilesController } from './files/files.controller';
 import { OpdsModule } from './opds/opds.module';
+import { FlareSolverrService } from './flaresolverr.service';
 
 @Module({
   imports: [OpdsModule],
@@ -17,6 +18,7 @@ import { OpdsModule } from './opds/opds.module';
     ProvidersRuntimeService,
     GutenbergProvider,
     AnnasArchiveProvider,
+    FlareSolverrService,
   ],
 })
 export class AppModule {}

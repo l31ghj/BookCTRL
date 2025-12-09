@@ -2,26 +2,26 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { load } from 'cheerio';
 import type { Element as CheerioElement } from 'domhandler';
+import { FlareSolverrService } from '../flaresolverr.service';
 import { EbookProvider, EbookSearchResult } from './provider.interface';
 
 @Injectable()
 export class AnnasArchiveProvider implements EbookProvider {
   readonly type = 'annas-archive';
+  private readonly userAgent = 'BookCTRL/1.0 (+https://github.com/) axios';
+
+  constructor(private readonly flaresolverr: FlareSolverrService) {}
 
   async search(query: string, settings: any): Promise<EbookSearchResult[]> {
     if (!query) return [];
 
     const baseUrl: string = settings?.baseUrl || 'https://annas-archive.org';
+    const headers = { 'User-Agent': this.userAgent };
+    const searchUrl = new URL('/search', baseUrl);
+    searchUrl.searchParams.set('q', query);
 
-    const res = await axios.get(baseUrl + '/search', {
-      params: { q: query },
-      headers: {
-        'User-Agent':
-          'BookCTRL/1.0 (+https://github.com/) axios',
-      },
-    });
-
-    const $ = load(res.data);
+    const html = await this.fetchPage(searchUrl.toString(), headers);
+    const $ = load(html);
     const results: EbookSearchResult[] = [];
 
     const cards = $('div.flex')
@@ -81,10 +81,8 @@ export class AnnasArchiveProvider implements EbookProvider {
 
   private async fetchDownloadLink(baseUrl: string, md5: string): Promise<string | undefined> {
     try {
-      const detail = await axios.get(`${baseUrl}/md5/${md5}`, {
-        headers: { 'User-Agent': 'BookCTRL/1.0 (+https://github.com/) axios' },
-      });
-      const $ = load(detail.data);
+      const html = await this.fetchPage(`${baseUrl}/md5/${md5}`, { 'User-Agent': this.userAgent });
+      const $ = load(html);
       const ipfsLinks = $('a[href*="ipfs_downloads"]')
         .map((_: number, el: CheerioElement) => $(el).attr('href'))
         .get()
@@ -112,5 +110,24 @@ export class AnnasArchiveProvider implements EbookProvider {
     } catch {
       return;
     }
+  }
+
+  private async fetchPage(url: string, headers: Record<string, string>): Promise<string> {
+    if (this.flaresolverr.isEnabled()) {
+      try {
+        const res = await this.flaresolverr.get(url, headers);
+        if (res?.data) return res.data;
+      } catch {
+        // fall through to direct request
+      }
+    }
+
+    const res = await axios.get(url, {
+      headers,
+      timeout: 20000,
+      maxRedirects: 5,
+      validateStatus: (s) => s >= 200 && s < 400,
+    });
+    return res.data;
   }
 }

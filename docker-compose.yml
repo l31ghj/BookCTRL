@@ -12,5 +12,14 @@ services:
     environment:
       DATABASE_URL: "file:/data/dev.db"
       EBOOKS_DIR: "/data/ebooks"
+      FLARESOLVERR_URL: "http://flaresolverr:8191"
     volumes:
       - ./data:/data
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    restart: unless-stopped
+    environment:
+      LOG_LEVEL: "info"
+      LOG_HTML: "false"
+      CAPTCHA_SOLVER: "none"

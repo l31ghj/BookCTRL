@@ -8,6 +8,7 @@ import { mkdir, stat } from 'fs/promises';
 import * as path from 'path';
 import { load } from 'cheerio';
 import { ProvidersRuntimeService } from './providers/providers-runtime.service';
+import { FlareSolverrService } from './flaresolverr.service';
 
 @Injectable()
 export class AppService {
@@ -18,6 +19,7 @@ export class AppService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly providersRuntime: ProvidersRuntimeService,
+    private readonly flaresolverr: FlareSolverrService,
   ) {
     this.ebooksDir = process.env.EBOOKS_DIR || '/data/ebooks';
   }
@@ -46,6 +48,49 @@ export class AppService {
       unitIndex++;
     }
     return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[unitIndex]}`;
+  }
+
+  private async fetchWithBypass(
+    url: string,
+    headers: Record<string, string> = {},
+    timeoutMs = 20000,
+  ) {
+    if (this.flaresolverr.isEnabled()) {
+      try {
+        const res = await this.flaresolverr.get(url, headers, timeoutMs);
+        if (res) {
+          return {
+            data: res.data,
+            headers: res.headers,
+            status: res.status,
+            url: res.url,
+          };
+        }
+      } catch {
+        // fallback to direct request
+      }
+    }
+
+    const res = await axios.get(url, {
+      headers,
+      timeout: timeoutMs,
+      maxRedirects: 5,
+      validateStatus: (s) => s >= 200 && s < 400,
+    });
+
+    const normalizedHeaders: Record<string, string> = {};
+    Object.entries(res.headers || {}).forEach(([k, v]) => {
+      if (Array.isArray(v)) normalizedHeaders[k] = v.join(', ');
+      else if (typeof v === 'string') normalizedHeaders[k] = v;
+      else if (v != null) normalizedHeaders[k] = String(v);
+    });
+
+    return {
+      data: res.data,
+      headers: normalizedHeaders,
+      status: res.status,
+      url: (res.request as any)?.res?.responseUrl || url,
+    };
   }
 
   async listLibrary() {
@@ -188,11 +233,10 @@ export class AppService {
         : new URL(providedUrl, baseUrl).toString();
 
     try {
-      const res = await axios.get(md5PageUrl, {
-        headers: { 'User-Agent': this.defaultUserAgent },
-        maxRedirects: 5,
+      const page = await this.fetchWithBypass(md5PageUrl, {
+        'User-Agent': this.defaultUserAgent,
       });
-      const $ = load(res.data);
+      const $ = load(page.data);
       const links: string[] = [];
 
       const ipfsCids: string[] = [];
@@ -273,16 +317,13 @@ export class AppService {
   }
 
   private async fetchSlowDirectLink(slowUrl: string): Promise<string | undefined> {
-    const client = axios.create({
-      maxRedirects: 5,
-      headers: {
-        'User-Agent': this.defaultUserAgent,
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
-    });
+    const headers = {
+      'User-Agent': this.defaultUserAgent,
+      Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+    };
 
     const fetchHtml = async () => {
-      const res = await client.get(slowUrl);
+      const res = await this.fetchWithBypass(slowUrl, headers);
       if (typeof res.data !== 'string') return '';
       return res.data as string;
     };
