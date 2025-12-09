@@ -23,7 +23,7 @@ export class FlareSolverrService {
    */
   async fetch(
     url: string,
-    timeoutMs = 60000,
+    timeoutMs = 90000,
   ): Promise<FlareSolverrResult | undefined> {
     if (!this.baseUrl) return;
 

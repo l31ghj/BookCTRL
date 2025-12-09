@@ -335,7 +335,7 @@ export class AppService {
       'User-Agent': this.defaultUserAgent,
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     };
-    const PAGE_TIMEOUT_MS = 120000; // allow for challenge + 30s countdown
+    const PAGE_TIMEOUT_MS = 150000; // allow for challenge + extended countdown
 
     const fetchPage = async () => {
       const res = await this.fetchWithBypass(slowUrl, headers, PAGE_TIMEOUT_MS);
@@ -350,18 +350,15 @@ export class AppService {
       return finalUrl;
     }
 
-    // Check for countdown
-    const countdownMatch = html.match(/js-partner-countdown[^>]*>(\d+)</i);
-    if (countdownMatch) {
-      const seconds = parseInt(countdownMatch[1], 10);
-      if (seconds > 0 && seconds < 300) {
-        await this.sleep((seconds + 2) * 1000);
-        const next = await fetchPage();
-        html = next.html;
-        finalUrl = next.finalUrl || finalUrl;
-        if (finalUrl && finalUrl.startsWith('http') && !finalUrl.includes('slow_download')) {
-          return finalUrl;
-        }
+    // Check for countdown (multiple patterns)
+    const countdownSeconds = this.extractCountdownSeconds(html);
+    if (countdownSeconds > 0) {
+      await this.sleep((countdownSeconds + 2) * 1000);
+      const next = await fetchPage();
+      html = next.html;
+      finalUrl = next.finalUrl || finalUrl;
+      if (finalUrl && finalUrl.startsWith('http') && !finalUrl.includes('slow_download')) {
+        return finalUrl;
       }
     }
 
@@ -408,6 +405,27 @@ export class AppService {
     }
 
     return;
+  }
+
+  private extractCountdownSeconds(html: string): number {
+    const patterns = [
+      /js-partner-countdown[^>]*>(\d+)</i,
+      /<[^>]*(?:id|class)=["'][^"']*(?:timer|countdown)[^"']*["'][^>]*>(\d+)<\/span>/i,
+      /data-countdown=["'](\d+)["']/i,
+      /countdown:\s*(\d+)/i,
+      /(?:var|let|const)\s+countdown\s*=\s*(\d+)/i,
+      /countdownSeconds\s*=\s*(\d+)/i,
+      /["']countdown[_-]?seconds["']\s*:\s*(\d+)/i,
+      /wait\s+(\d+)\s+seconds/i,
+    ];
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        const seconds = parseInt(match[1], 10);
+        if (seconds > 0 && seconds < 600) return seconds;
+      }
+    }
+    return 0;
   }
 
   async search(query: string) {
