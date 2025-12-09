@@ -142,13 +142,17 @@ export class AppService {
     const downloadUrls = await this.resolveDownloadUrls(input);
 
     let response: any = null;
-    for (const url of downloadUrls) {
-      try {
-        const res = await axios.get(url, {
-          responseType: 'stream',
-          maxRedirects: 5,
-          validateStatus: (s) => s >= 200 && s < 400,
-        });
+      for (const url of downloadUrls) {
+        try {
+          const res = await axios.get(url, {
+            responseType: 'stream',
+            maxRedirects: 5,
+            headers: {
+              'User-Agent': this.defaultUserAgent,
+              Accept: '*/*',
+            },
+            validateStatus: (s) => s >= 200 && s < 400,
+          });
         const contentType = (res.headers['content-type'] || '').toLowerCase();
         const contentLength = Number(res.headers['content-length'] || 0);
         if (contentType.includes('text/html') || contentType.includes('text/plain')) {
@@ -369,6 +373,7 @@ export class AppService {
       /window\.location\.href\s*=\s*["']([^"']*)["']/i,
       /href=["'](https?:\/\/[^"']+\.(?:epub|pdf|mobi|azw3|djvu|txt)[^"']*)["']/i,
       /(https?:\/\/[^\s"'<>]+?\.(?:epub|pdf|mobi|azw3|djvu|txt)[^\s"'<>]*)/i,
+      /http-equiv=["']refresh["'][^>]*url=([^"'>\s;]+)/i,
     ];
 
     for (const pattern of patterns) {
@@ -387,6 +392,19 @@ export class AppService {
     // As a last resort, if finalUrl became non-slow_download after patterns
     if (finalUrl && finalUrl.startsWith('http') && !finalUrl.includes('slow_download')) {
       return finalUrl;
+    }
+
+    // Try to guess any http link that contains the md5 as a last heuristic
+    try {
+      const urlFromMd5 = html.match(/https?:\/\/[^\s"'<>]*[a-fA-F0-9]{32}[^\s"'<>]*/i);
+      if (urlFromMd5 && urlFromMd5[0]) {
+        const candidate = urlFromMd5[0].replace(/&amp;/g, '&');
+        if (candidate.startsWith('http') && !candidate.includes('slow_download')) {
+          return candidate;
+        }
+      }
+    } catch {
+      // ignore
     }
 
     return;
