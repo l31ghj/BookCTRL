@@ -57,7 +57,7 @@ export class AppService {
   ) {
     if (this.flaresolverr.isEnabled()) {
       try {
-        const res = await this.flaresolverr.get(url, headers, timeoutMs);
+        const res = await this.flaresolverr.fetch(url, timeoutMs);
         if (res) {
           return {
             data: res.data,

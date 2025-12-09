@@ -115,7 +115,7 @@ export class AnnasArchiveProvider implements EbookProvider {
   private async fetchPage(url: string, headers: Record<string, string>): Promise<string> {
     if (this.flaresolverr.isEnabled()) {
       try {
-        const res = await this.flaresolverr.get(url, headers);
+        const res = await this.flaresolverr.fetch(url, 30000);
         if (res?.data) return res.data;
       } catch {
         // fall through to direct request
