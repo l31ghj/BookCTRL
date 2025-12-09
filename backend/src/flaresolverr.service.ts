@@ -34,15 +34,19 @@ export class FlareSolverrService {
     if (!sessionId) return;
 
     try {
-      const res = await this.request({
-        cmd: 'request.get',
-        url,
-        session: sessionId,
-        maxTimeout: timeoutMs,
-      });
+      const res = await this.request(
+        {
+          cmd: 'request.get',
+          url,
+          session: sessionId,
+          maxTimeout: timeoutMs,
+        },
+        timeoutMs,
+      );
 
-      if (res?.status !== 'ok' || !res.solution) {
-        throw new Error(res?.message || 'No solution');
+      if (!res || res.status !== 'ok' || !res.solution) {
+        this.logger.debug(`FlareSolverr returned non-ok status: ${res?.status} ${res?.message || ''}`);
+        return;
       }
 
       const solution = res.solution;
@@ -52,6 +56,10 @@ export class FlareSolverrService {
         headers: solution.headers || {},
         data: solution.response || '',
       };
+    } catch (err: any) {
+      const message = err?.message || 'Unknown FlareSolverr error';
+      this.logger.debug(`FlareSolverr request failed: ${message}`);
+      return;
     } finally {
       await this.destroySession(sessionId).catch((err) => {
         this.logger.warn(`FlareSolverr session destroy failed: ${err?.message || err}`);
@@ -81,7 +89,7 @@ export class FlareSolverrService {
       return res.data;
     } catch (err: any) {
       const message = err?.message || 'Unknown FlareSolverr error';
-      this.logger.warn(`FlareSolverr request failed: ${message}`);
+      this.logger.debug(`FlareSolverr HTTP error: ${message}`);
       throw err;
     }
   }
