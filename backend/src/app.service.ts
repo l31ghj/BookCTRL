@@ -233,9 +233,13 @@ export class AppService {
         : new URL(providedUrl, baseUrl).toString();
 
     try {
-      const page = await this.fetchWithBypass(md5PageUrl, {
-        'User-Agent': this.defaultUserAgent,
-      });
+      const page = await this.fetchWithBypass(
+        md5PageUrl,
+        {
+          'User-Agent': this.defaultUserAgent,
+        },
+        45000,
+      );
       const $ = load(page.data);
       const links: string[] = [];
 
@@ -321,9 +325,10 @@ export class AppService {
       'User-Agent': this.defaultUserAgent,
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     };
+    const PAGE_TIMEOUT_MS = 120000; // allow for challenge + 30s countdown
 
     const fetchHtml = async () => {
-      const res = await this.fetchWithBypass(slowUrl, headers);
+      const res = await this.fetchWithBypass(slowUrl, headers, PAGE_TIMEOUT_MS);
       if (typeof res.data !== 'string') return '';
       return res.data as string;
     };
